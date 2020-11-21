@@ -15,8 +15,10 @@ headers = {
 
 def authenticate():
   
-  response = requests.request("POST", url, headers=headers)
-  
+  try:  
+    response = requests.request("POST", url, headers=headers)
+  except OSError as e:
+    print(e)
   #print(response.text)
   data = json.loads(response.text)
 

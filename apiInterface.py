@@ -26,45 +26,67 @@ def getgstdata(gstdatalist):
             'x-api-key': config.api_key,
             'x-api-version': '3.3'
         }
-        response = requests.request("GET", url, headers=headers)
-        print(response.text)
+        try: 
+            response = requests.request("GET", url, headers=headers)
+        except OSError as e:
+            print(e)
+            print("API ERROR")
+        #print(response.text)
+
         jsondata = json.loads(response.text)
         
-        if not jsondata["code"]:
-            for x in jsondata['data']:
-                writetocsv(x,dt_string)
+        
+
+        if not "code" in jsondata:
+            headerlist = ["GST Number"]
+            
+            for items in list(jsondata[0].keys()):
+                    print(items)
+                    headerlist.append(items)
+
+            print(headerlist)
+            for data in jsondata:
+                writedict  = {"GST Number" : temp_gstn}
+                writedict.update(data)
+                print(writedict)
+                writetocsv(headerlist,writedict,dt_string)
+
+            writeblanklinetocsv(headerlist,dt_string)
+
         else:
             print("API ERROR")
+            print(jsondata)
+        
 
-        writeblanklinetocsv(dt_string)
-
+        
 
 
 
 
         
 
-def writetocsv(datadict,dt_string):
-    fileexists = os.path.isfile("/Output"+"/Generated"+dt_string+"_DATA.csv")
-    csv_file = open("/Output"+"/Generated"+dt_string+"_DATA.csv",mode='a')
+def writetocsv(headerlist,datadict,dt_string):
+    fileexists = os.path.isfile("./Output"+"/Generated"+dt_string+"_DATA.csv")
+    csv_file = open("./Output"+"/Generated"+dt_string+"_DATA.csv",mode='a')
 
-
-    writer = csv.DictWriter(csv_file,datadict.keys())
+    writer = csv.DictWriter(csv_file,fieldnames = headerlist)
     if not fileexists:
+        print(fileexists)
         writer.writeheader()
-        
+
+    writer.writerow(datadict)    
     return fileexists
 
 
 
-def writeblanklinetocsv(dt_string):
-    fileexists = os.path.isfile("/Output"+"/Generated"+dt_string+"_DATA.csv")
+def writeblanklinetocsv(headerlist,dt_string):
+    fileexists = os.path.isfile("./Output"+"/Generated"+dt_string+"_DATA.csv")
     if fileexists:
-        csv_file = open("/Output"+"/Generated"+dt_string+"_DATA.csv",mode='a',newline='\n')
-        writer = csv.DictWriter(csv_file)
-        writer.writerow()
+        csv_file = open("./Output"+"/Generated"+dt_string+"_DATA.csv",mode='a')
+        writer = csv.DictWriter(csv_file,fieldnames = headerlist)
+        writer.writerow({})
     else:
         print("File Does Not Exist")
 
-#getgstdata([['27AAACT3151E1ZP','fy 2017-18']])
+#getgstdata([['27AAACT3151E1ZP','FY 2017-18'],['27AAACK4409J1ZK','FY 2017-18']])
 
