@@ -23,7 +23,7 @@ def getgstdata(gstdatalist):
         url = baseurl+"gstin="+temp_gstn+"&"+"financial_year="+temp_fy
         print(url)
         headers = {'Authorization': authtoken, 
-            'x-api-key': config.api_key,
+            'x-api-key': config.getapi_key(),
             'x-api-version': '3.3'
         }
         try: 

@@ -4,9 +4,11 @@ from config import config
 
 url = "https://api.quicko.com/authenticate"
 
-api_key = config.api_key
-api_secret = config.api_secret
+api_key = config.getapi_key()
+api_secret = config.getapi_secret()
 
+print(api_key)
+print(api_secret)
 headers = {
   'x-api-key': api_key,
   'x-api-secret': api_secret,
@@ -22,6 +24,7 @@ def authenticate():
   #print(response.text)
   data = json.loads(response.text)
 
+  print(data)
   accesstoken = data["access_token"]
 
 
