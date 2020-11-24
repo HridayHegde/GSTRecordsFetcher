@@ -4,70 +4,84 @@ import os
 from datetime import datetime
 import csv
 import json
+import pandas as pd
 
 from config import config
+#import pandasModel
 
+#import pandas as pd
 
 baseurl = "https://api.quicko.com/gsp/public/gstr?"
 
-
+global df
+df = None
 def getgstdata(gstdatalist):
+    global df
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
-
+    status = False
     authtoken = autentication.authenticate()
+    if not authtoken == "Null":
+        for x in gstdatalist:
+            temp_gstn = x[0]
+            temp_fy = x[1]
+            url = baseurl+"gstin="+temp_gstn+"&"+"financial_year="+temp_fy
+            print(url)
+            headers = {'Authorization': authtoken, 
+                'x-api-key': config.getapi_key(),
+                'x-api-version': '3.3'
+            }
+            try: 
+                response = requests.request("GET", url, headers=headers)
+            except OSError as e:
+                print(e)
+                print("API ERROR")
+            #print(response.text)
 
-    for x in gstdatalist:
-        temp_gstn = x[0]
-        temp_fy = x[1]
-        url = baseurl+"gstin="+temp_gstn+"&"+"financial_year="+temp_fy
-        print(url)
-        headers = {'Authorization': authtoken, 
-            'x-api-key': config.getapi_key(),
-            'x-api-version': '3.3'
-        }
-        try: 
-            response = requests.request("GET", url, headers=headers)
-        except OSError as e:
-            print(e)
-            print("API ERROR")
-        #print(response.text)
-
-        jsondata = json.loads(response.text)
-        
-        
-
-        if not "code" in jsondata:
-            headerlist = ["GST Number"]
+            jsondata = json.loads(response.text)
             
-            for items in list(jsondata[0].keys()):
-                    print(items)
-                    headerlist.append(items)
+            
 
-            print(headerlist)
-            for data in jsondata:
-                writedict  = {"GST Number" : temp_gstn}
-                writedict.update(data)
-                print(writedict)
-                writetocsv(headerlist,writedict,dt_string)
+            if not "code" in jsondata:
+                headerlist = ["GST Number","Financial Year"]
+                
+                for items in list(jsondata[0].keys()):
+                        print(items)
+                        headerlist.append(items)
+                if not df == pd.DataFrame():
+                    df = pd.DataFrame(columns=headerlist)
+                print(headerlist)
+                for data in jsondata:
+                    writedict  = {"GST Number" : temp_gstn,"Financial Year": temp_fy}
+                    #print(data)
+                    writedict.update(data)
+                    df = df.append(writedict, ignore_index=True)
+                    print(writedict)
+                    #writetocsv(headerlist,writedict,dt_string)
+                    writedftocsv(df,dt_string)
+                status = True
+                #writeblanklinetocsv(headerlist,dt_string)
 
-            writeblanklinetocsv(headerlist,dt_string)
-
-        else:
-            print("API ERROR")
-            print(jsondata)
-        
-
-        
-
+            else:
+                print("API ERROR")
+                status = False
+                print(jsondata)
+                
+        return status,""
+    else:
 
 
+        return False,jsondata["message"]
 
+def writedftocsv(df,dt_string):
+    fileexists = os.path.isfile("./Output"+"/Generated"+dt_string+"_DATA.csv")
+    if not fileexists:
+        df.to_csv("./Output"+"/Generated"+dt_string+"_DATA.csv",mode='a',index=False)
         
 
 def writetocsv(headerlist,datadict,dt_string):
     fileexists = os.path.isfile("./Output"+"/Generated"+dt_string+"_DATA.csv")
-    csv_file = open("./Output"+"/Generated"+dt_string+"_DATA.csv",mode='a')
+    csv_file = open("./Output"+"/Generated"+dt_string+"_DATA.csv",mode='a',newline='')
 
     writer = csv.DictWriter(csv_file,fieldnames = headerlist)
     if not fileexists:

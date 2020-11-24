@@ -19,10 +19,12 @@ def authenticate():
   
   try:  
     response = requests.request("POST", url, headers=headers)
+    data = json.loads(response.text)
   except OSError as e:
+    data = {"access_token":"Null"}
     print(e)
   #print(response.text)
-  data = json.loads(response.text)
+  
 
   print(data)
   accesstoken = data["access_token"]
