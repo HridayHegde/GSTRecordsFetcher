@@ -23,6 +23,7 @@ def getgstdata(gstdatalist):
     authtoken = autentication.authenticate()
     if not authtoken == "Null":
         for x in gstdatalist:
+            message = ""
             temp_gstn = x[0]
             temp_fy = x[1]
             url = baseurl+"gstin="+temp_gstn+"&"+"financial_year="+temp_fy
@@ -48,7 +49,7 @@ def getgstdata(gstdatalist):
                 for items in list(jsondata[0].keys()):
                         print(items)
                         headerlist.append(items)
-                if not df == pd.DataFrame():
+                if not isinstance(df,pd.DataFrame):
                     df = pd.DataFrame(columns=headerlist)
                 print(headerlist)
                 for data in jsondata:
@@ -58,7 +59,8 @@ def getgstdata(gstdatalist):
                     df = df.append(writedict, ignore_index=True)
                     print(writedict)
                     #writetocsv(headerlist,writedict,dt_string)
-                    writedftocsv(df,dt_string)
+                
+                
                 status = True
                 #writeblanklinetocsv(headerlist,dt_string)
 
@@ -66,8 +68,10 @@ def getgstdata(gstdatalist):
                 print("API ERROR")
                 status = False
                 print(jsondata)
+                message = jsondata["message"]
+        writedftocsv(df,dt_string)
                 
-        return status,""
+        return status,message
     else:
 
 
