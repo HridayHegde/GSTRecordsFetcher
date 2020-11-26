@@ -21,6 +21,7 @@ def getgstdata(gstdatalist):
     dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
     status = False
     authtoken = autentication.authenticate()
+    jsondata = None
     if not authtoken == "Null":
         for x in gstdatalist:
             message = ""
@@ -73,9 +74,13 @@ def getgstdata(gstdatalist):
                 
         return status,message
     else:
-
-
-        return False,jsondata["message"]
+        if not jsondata == None: 
+            if "message" in jsondata:
+                return False,jsondata["message"]
+            else:
+                return False,"Unknow Error"
+        else:
+            return False,""
 
 def writedftocsv(df,dt_string):
     fileexists = os.path.isfile("./Output"+"/Generated"+dt_string+"_DATA.csv")
