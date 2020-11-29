@@ -1,0 +1,11 @@
+{
+    "fields":[
+        "dof",
+        "rtntype",
+        "ret_prd",
+        "arn",
+        "status"
+
+    ]
+
+}

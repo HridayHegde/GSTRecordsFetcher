@@ -16,6 +16,8 @@ baseurl = "https://api.quicko.com/gsp/public/gstr?"
 global df
 df = None
 def getgstdata(gstdatalist):
+    dataconfigfile = open("./config/dataconfig.json")
+    configjsondata = json.load(dataconfigfile)
     global df
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
@@ -24,7 +26,7 @@ def getgstdata(gstdatalist):
     jsondata = None
     if not authtoken == "Null":
         for x in gstdatalist:
-            message = ""
+            message = "Unknown Error"
             temp_gstn = x[0]
             temp_fy = x[1]
             url = baseurl+"gstin="+temp_gstn+"&"+"financial_year="+temp_fy
@@ -47,16 +49,26 @@ def getgstdata(gstdatalist):
             if not "code" in jsondata:
                 headerlist = ["GST Number","Financial Year"]
                 
-                for items in list(jsondata[0].keys()):
+                for items in configjsondata["fields"]:
                         print(items)
                         headerlist.append(items)
                 if not isinstance(df,pd.DataFrame):
                     df = pd.DataFrame(columns=headerlist)
                 print(headerlist)
                 for data in jsondata:
+                    tempdata ={}
+                    for field in configjsondata["fields"]:
+                        if not field == "ret_prd":
+                            tempdata[field] = data[field]
+                        else:
+                            changeddata = ""
+                            retperioddata = data["ret_prd"]
+                            changeddata = datetime.strptime(retperioddata, "%m%Y").strftime("%b-%Y")
+                            tempdata[field] = changeddata
                     writedict  = {"GST Number" : temp_gstn,"Financial Year": temp_fy}
                     #print(data)
-                    writedict.update(data)
+                    
+                    writedict.update(tempdata)
                     df = df.append(writedict, ignore_index=True)
                     print(writedict)
                     #writetocsv(headerlist,writedict,dt_string)
@@ -80,7 +92,7 @@ def getgstdata(gstdatalist):
             else:
                 return False,"Unknow Error"
         else:
-            return False,""
+            return False,"API Data Not Recieved"
 
 def writedftocsv(df,dt_string):
     fileexists = os.path.isfile("./Output"+"/Generated"+dt_string+"_DATA.csv")
