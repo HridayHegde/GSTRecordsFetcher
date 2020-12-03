@@ -16,8 +16,12 @@ baseurl = "https://api.quicko.com/gsp/public/gstr?"
 global df
 df = None
 def getgstdata(gstdatalist):
-    dataconfigfile = open("./config/dataconfig.json")
-    configjsondata = json.load(dataconfigfile)
+    message = ""
+    try:
+        dataconfigfile = open("./config/dataconfig.json")
+        configjsondata = json.load(dataconfigfile)
+    except:
+        message = message + "\n" + "Configuration Files Missing, please use all contents of the ZIP file"
     global df
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y_%H-%M-%S")
@@ -26,7 +30,6 @@ def getgstdata(gstdatalist):
     jsondata = None
     if not authtoken == "Null":
         for x in gstdatalist:
-            message = "Unknown Error"
             temp_gstn = x[0]
             temp_fy = x[1]
             url = baseurl+"gstin="+temp_gstn+"&"+"financial_year="+temp_fy
@@ -81,18 +84,23 @@ def getgstdata(gstdatalist):
                 print("API ERROR")
                 status = False
                 print(jsondata)
-                message = jsondata["message"]
-        writedftocsv(df,dt_string)
-                
+                message = message +"\n"+ jsondata["message"]
+        try:
+            writedftocsv(df,dt_string)
+        except:
+            message = message + "\n"+ "CSV Write Error"    
         return status,message
     else:
         if not jsondata == None: 
             if "message" in jsondata:
-                return False,jsondata["message"]
+                message = message + "\n"+ jsondata["message"]
+                return False,message
             else:
-                return False,"Unknow Error"
+                message = message + "\n" + "Unknown Error"
+                return False, message
         else:
-            return False,"API Data Not Recieved"
+            message = message + "\n" + "Authentication Failed"
+            return False,message
 
 def writedftocsv(df,dt_string):
     fileexists = os.path.isfile("./Output"+"/Generated"+dt_string+"_DATA.csv")
